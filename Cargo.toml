@@ -4,7 +4,7 @@ version = "1.4.9"
 authors = ["rustdesk <info@rustdesk.com>"]
 edition = "2021"
 build= "build.rs"
-description = "RustDesk Remote Desktop"
+description = "Aurum Nexus - Suporte Remoto - Marly Fagundes Advogados"
 default-run = "rustdesk"
 rust-version = "1.75"
 
