@@ -153,7 +153,7 @@ jobs:
           sed -i '/dpiAware/d' res/manifest.xml
           pushd ./libs/portable
           pip3 install -r requirements.txt
-          python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe
+          python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/AurumNexus.exe
           popd
           mkdir -p ./SaidaAurum
           mv ./target/release/rustdesk-portable-packer.exe ./SaidaAurum/AurumNexus-${{ env.VERSION }}-x86_64.exe

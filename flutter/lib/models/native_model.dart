@@ -122,7 +122,9 @@ class PlatformFFI {
         : isLinux
             ? DynamicLibrary.open('librustdesk.so')
             : isWindows
-                ? DynamicLibrary.open('librustdesk.dll')
+                // Aurum Nexus: a dll foi renomeada (Cargo.toml [lib] name).
+                // Se estes dois nomes divergirem o app nem abre.
+                ? DynamicLibrary.open('aurumnexus.dll')
                 :
                 // Use executable itself as the dynamic library for MacOS.
                 // Multiple dylib instances will cause some global instances to be invalid.

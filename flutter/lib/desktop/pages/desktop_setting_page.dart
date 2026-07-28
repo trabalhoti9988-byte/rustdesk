@@ -2502,24 +2502,19 @@ class _AboutState extends State<_About> {
               SelectionArea(
                   child: Text('${translate('ID')}: $myId')
                       .marginSymmetric(vertical: 4.0)),
+              // Aurum Nexus: "Politica de Privacidade" apontava para o site do
+              // RustDesk, que nao fala do nosso uso - removida. O site e o do
+              // escritorio.
               InkWell(
                   onTap: () {
-                    launchUrlString('https://rustdesk.com/privacy.html');
-                  },
-                  child: Text(
-                    translate('Privacy Statement'),
-                    style: linkStyle,
-                  ).marginSymmetric(vertical: 4.0)),
-              InkWell(
-                  onTap: () {
-                    launchUrlString('https://rustdesk.com');
+                    launchUrlString('https://fagundesadv.com.br');
                   },
                   child: Text(
                     translate('Website'),
                     style: linkStyle,
                   ).marginSymmetric(vertical: 4.0)),
               Container(
-                decoration: const BoxDecoration(color: Color(0xFF2c8cff)),
+                decoration: const BoxDecoration(color: Color(0xFF1F191A)),
                 padding:
                     const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
                 child: SelectionArea(
@@ -2530,14 +2525,30 @@ class _AboutState extends State<_About> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Copyright © ${DateTime.now().toString().substring(0, 4)} Purslane Tech Pte. Ltd.\n$license',
-                            style: const TextStyle(color: Colors.white),
+                            'Marly Fagundes Advogados',
+                            style: const TextStyle(
+                                color: Color(0xFFC7993C),
+                                fontWeight: FontWeight.w800),
                           ),
                           Text(
-                            translate('Slogan_tip'),
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white),
+                            'Suporte remoto interno do escritorio',
+                            style: const TextStyle(color: Colors.white),
+                          ).marginOnly(bottom: 8),
+                          // Este bloco e obrigatorio: a AGPL-3.0 exige preservar o
+                          // aviso de copyright e dar acesso ao codigo modificado.
+                          // Nao remover - e o que nos autoriza a usar a base.
+                          InkWell(
+                            onTap: () {
+                              launchUrlString(
+                                  'https://github.com/trabalhoti9988-byte/rustdesk');
+                            },
+                            child: Text(
+                              'Baseado em RustDesk, Copyright © ${DateTime.now().toString().substring(0, 4)} Purslane Tech Pte. Ltd.\n$license - codigo-fonte disponivel',
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.7),
+                                  fontSize: 11,
+                                  decoration: TextDecoration.underline),
+                            ),
                           )
                         ],
                       ),
