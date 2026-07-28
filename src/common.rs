@@ -1027,6 +1027,17 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
     Ok(())
 }
 
+// Aurum Nexus: identificador do app, SEM espaco.
+// O APP_NAME ("Aurum Nexus") e texto para o usuario ler. Isto aqui e o que o Windows
+// trata como NOME e nao como frase: nome de servico do `sc`, chave do registro,
+// extensao de arquivo, esquema de URI, nome de processo. O RustDesk derivava tudo isso
+// do APP_NAME e dava certo por acidente - "RustDesk" nao tem espaco. Com espaco, cada
+// um desses comandos quebra em silencio: `sc create Aurum Nexus` le "Aurum" como nome
+// do servico e "Nexus" como argumento invalido, `reg add ...\Uninstall\Aurum Nexus`
+// sem aspas idem, e comparar processo com "aurum nexus.exe" nunca acha nada.
+// Tem que ser o EXE_FILE_NAME (platform::windows) sem o ".exe".
+pub const APP_ID: &str = "AurumNexus";
+
 #[inline]
 pub fn get_app_name() -> String {
     hbb_common::config::APP_NAME.read().unwrap().clone()
@@ -1039,7 +1050,10 @@ pub fn is_rustdesk() -> bool {
 
 #[inline]
 pub fn get_uri_prefix() -> String {
-    format!("{}://", get_app_name().to_lowercase())
+    // Aurum Nexus: pelo APP_ID, nao pelo APP_NAME - "aurum nexus://" nao e esquema de
+    // URI valido (espaco) e tem que bater com a chave que o instalador escreve em
+    // HKEY_CLASSES_ROOT.
+    format!("{}://", APP_ID.to_lowercase())
 }
 
 #[cfg(target_os = "macos")]

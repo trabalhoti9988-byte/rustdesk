@@ -536,9 +536,10 @@ fn service_main(arguments: Vec<OsString>) {
 }
 
 pub fn start_os_service() {
-    if let Err(e) =
-        windows_service::service_dispatcher::start(crate::get_app_name(), ffi_service_main)
-    {
+    // Aurum Nexus: o nome tem que ser o mesmo que o `sc create` registrou (APP_ID).
+    // O Windows ignora este nome em servico de processo proprio, mas divergir aqui e
+    // pedir para perder uma tarde quando um dia deixar de ignorar.
+    if let Err(e) = windows_service::service_dispatcher::start(crate::APP_ID, ffi_service_main) {
         log::error!("start_service failed: {}", e);
     }
 }
@@ -658,7 +659,7 @@ async fn run_service(_arguments: Vec<OsString>) -> ResultType<()> {
     };
 
     // Register system service event handler
-    let status_handle = service_control_handler::register(crate::get_app_name(), event_handler)?;
+    let status_handle = service_control_handler::register(crate::APP_ID, event_handler)?;
 
     let next_status = ServiceStatus {
         // Should match the one from system service registry
@@ -1302,18 +1303,21 @@ fn get_valid_subkey() -> String {
     if !get_reg_of(&subkey, "InstallLocation").is_empty() {
         return subkey;
     }
-    let app_name = crate::get_app_name();
-    let subkey = get_subkey(&app_name, true);
+    // Aurum Nexus: pelo APP_ID. O instalador escreve 14 valores nessa chave com
+    // `reg add {subkey}` SEM aspas - com "Aurum Nexus" o reg.exe le "Aurum" como a
+    // chave e "Nexus" como argumento invalido, e nao sobra nada no registro (foi o que
+    // aconteceu: instalacao sem entrada em "Aplicativos e Recursos").
+    let subkey = get_subkey(crate::APP_ID, true);
     if !get_reg_of(&subkey, "InstallLocation").is_empty() {
         return subkey;
     }
-    return get_subkey(&app_name, false);
+    return get_subkey(crate::APP_ID, false);
 }
 
 // Return install options other than InstallLocation.
 pub fn get_install_options() -> String {
-    let app_name = crate::get_app_name();
-    let subkey = format!(".{}", app_name.to_lowercase());
+    // Aurum Nexus: APP_ID - tem que bater com a extensao que o instalador registra.
+    let subkey = format!(".{}", crate::APP_ID.to_lowercase());
     let mut opts = HashMap::new();
 
     let desktop_shortcuts = get_reg_of_hkcr(&subkey, REG_NAME_INSTALL_DESKTOPSHORTCUTS);
@@ -1335,8 +1339,7 @@ pub fn get_silent_install_options(printer_override: Option<bool>) -> &'static st
     let install_printer = match printer_override {
         Some(override_value) => override_value,
         None => {
-            let app_name = crate::get_app_name();
-            let subkey = format!(".{}", app_name.to_lowercase());
+            let subkey = format!(".{}", crate::APP_ID.to_lowercase());
             let printer = get_reg_of_hkcr(&subkey, REG_NAME_INSTALL_PRINTER);
             printer.as_deref() == Some("1")
         }
@@ -1362,7 +1365,9 @@ pub fn get_install_info() -> (String, String, String, String) {
 }
 
 fn get_default_install_info() -> (String, String, String, String) {
-    get_install_info_with_subkey(get_subkey(&crate::get_app_name(), false))
+    // Aurum Nexus: APP_ID, igual ao get_valid_subkey - as duas tem que apontar para a
+    // mesma chave, senao uma escreve e a outra nao acha.
+    get_install_info_with_subkey(get_subkey(crate::APP_ID, false))
 }
 
 fn get_default_install_path() -> String {
@@ -1507,7 +1512,9 @@ fn get_after_install(
     reg_value_printer: Option<String>,
 ) -> String {
     let app_name = crate::get_app_name();
-    let ext = app_name.to_lowercase();
+    // Aurum Nexus: `ext` vira nome de chave em HKEY_CLASSES_ROOT (extensao `.{ext}` e
+    // esquema de URI `{ext}://`) em `reg add` sem aspas. Pelo APP_ID.
+    let ext = crate::APP_ID.to_lowercase();
 
     // reg delete HKEY_CURRENT_USER\Software\Classes for
     // https://github.com/rustdesk/rustdesk/commit/f4bdfb6936ae4804fc8ab1cf560db192622ad01a
@@ -1773,7 +1780,7 @@ pub fn run_before_uninstall() -> ResultType<()> {
 
 fn get_before_uninstall(kill_self: bool) -> String {
     let app_name = crate::get_app_name();
-    let ext = app_name.to_lowercase();
+    let ext = crate::APP_ID.to_lowercase();
     let filter = if kill_self {
         "".to_string()
     } else {
@@ -1782,14 +1789,16 @@ fn get_before_uninstall(kill_self: bool) -> String {
     format!(
         "
     chcp 65001
-    sc stop {app_name}
-    sc delete {app_name}
+    sc stop {app_id}
+    sc delete {app_id}
     taskkill /F /IM {broker_exe}
-    taskkill /F /IM {app_name}.exe{filter}
+    taskkill /F /IM \"{exe_file}\"{filter}
     reg delete HKEY_CLASSES_ROOT\\.{ext} /f
     reg delete HKEY_CLASSES_ROOT\\{ext} /f
     netsh advfirewall firewall delete rule name=\"{app_name} Service\"
     ",
+        app_id = crate::APP_ID,
+        exe_file = EXE_FILE_NAME,
         broker_exe = WIN_TOPMOST_INJECTED_PROCESS_EXE,
     )
 }
@@ -1857,7 +1866,10 @@ fn write_cmds(cmds: String, ext: &str, tip: &str) -> ResultType<std::path::PathB
             tmp = dir;
         }
     }
-    tmp.push(format!("{}_{}.{}", crate::get_app_name(), tip, ext));
+    // Aurum Nexus: APP_ID. Este nome vira caminho numa linha de comando
+    // (`cmd /C <arquivo>`), e nome de arquivo com espaco em linha de comando e a
+    // origem de metade dos bugs desta pasta. Ninguem ve esse arquivo.
+    tmp.push(format!("{}_{}.{}", crate::APP_ID, tip, ext));
     let mut file = std::fs::File::create(&tmp)?;
     if ext == "bat" {
         let tmp2 = get_undone_file(&tmp)?;
@@ -2151,8 +2163,7 @@ pub fn update_install_option(k: &str, v: &str) -> ResultType<()> {
     if ![REG_NAME_INSTALL_PRINTER].contains(&k) || !["0", "1"].contains(&v) {
         return Ok(());
     }
-    let app_name = crate::get_app_name();
-    let ext = app_name.to_lowercase();
+    let ext = crate::APP_ID.to_lowercase();
     let cmds =
         format!("chcp 65001 && reg add HKEY_CLASSES_ROOT\\.{ext} /f /v {k} /t REG_SZ /d \"{v}\"");
     run_cmds(cmds, false, "update_install_option")?;
@@ -3178,13 +3189,15 @@ pub fn uninstall_service(show_new_window: bool, _: bool) -> bool {
     let cmds = format!(
         "
     chcp 65001
-    sc stop {app_name}
-    sc delete {app_name}
+    sc stop {app_id}
+    sc delete {app_id}
     if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\"
     taskkill /F /IM {broker_exe}
-    taskkill /F /IM {app_name}.exe{filter}
+    taskkill /F /IM \"{exe_file}\"{filter}
     ",
         app_name = crate::get_app_name(),
+        app_id = crate::APP_ID,
+        exe_file = EXE_FILE_NAME,
         broker_exe = WIN_TOPMOST_INJECTED_PROCESS_EXE,
     );
     if let Err(err) = run_cmds(cmds, false, "uninstall") {
@@ -3208,7 +3221,7 @@ pub fn install_service() -> bool {
     let cmds = format!(
         "
 chcp 65001
-taskkill /F /IM {app_name}.exe{filter}
+taskkill /F /IM \"{exe_file}\"{filter}
 cscript \"{tray_shortcut}\"
 copy /Y \"{tmp_path}\\{app_name} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\"
 {import_config}
@@ -3216,6 +3229,7 @@ copy /Y \"{tmp_path}\\{app_name} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\
 if exist \"{tray_shortcut}\" del /f /q \"{tray_shortcut}\"
     ",
         app_name = crate::get_app_name(),
+        exe_file = EXE_FILE_NAME,
         import_config = get_import_config(&exe),
         create_service = get_create_service(&exe),
     );
@@ -3380,7 +3394,7 @@ reg add {subkey} /f /v EstimatedSize /t REG_DWORD /d {size}
 
     let filter = format!(" /FI \"PID ne {}\"", get_current_pid());
     let restore_service_cmd = if is_service_running {
-        format!("sc start {}", &app_name)
+        format!("sc start {}", crate::APP_ID)
     } else {
         "".to_owned()
     };
@@ -3412,8 +3426,8 @@ reg add {subkey} /f /v EstimatedSize /t REG_DWORD /d {size}
     let cmds = format!(
         "
 chcp 65001
-sc stop {app_name}
-taskkill /F /IM {app_name}.exe{filter}
+sc stop {app_id}
+taskkill /F /IM \"{exe_file}\"{filter}
 {reg_cmd}
 {copy_exe}
 {rename_exe}
@@ -3423,7 +3437,8 @@ taskkill /F /IM {app_name}.exe{filter}
 {install_printer_cmd}
 {sleep}
     ",
-        app_name = app_name,
+        app_id = crate::APP_ID,
+        exe_file = EXE_FILE_NAME,
         copy_exe = copy_exe_cmd(&src_exe, &exe, &path)?,
         rename_exe = rename_exe_cmd(&src_exe, &path)?,
         remove_meta_toml = remove_meta_toml_cmd(is_msi.unwrap_or(true), &path),
@@ -3700,15 +3715,20 @@ fn get_import_config(exe: &str) -> String {
     if config::is_outgoing_only() {
         return "".to_string();
     }
+    // Aurum Nexus: nome do servico = APP_ID, sem espaco. `sc create Aurum Nexus` lia
+    // "Aurum" como nome e "Nexus" como argumento invalido: nenhum servico era criado,
+    // e sem servico nao ha acesso desassistido nem tela de UAC. O DisplayName, que e o
+    // que aparece em services.msc, continua com o nome de verdade.
     format!("
-sc stop {app_name}
-sc delete {app_name}
-sc create {app_name} binpath= \"\\\"{exe}\\\" --import-config \\\"{config_path}\\\"\" start= auto DisplayName= \"{app_name} Service\"
-sc start {app_name}
-sc stop {app_name}
-sc delete {app_name}
+sc stop {app_id}
+sc delete {app_id}
+sc create {app_id} binpath= \"\\\"{exe}\\\" --import-config \\\"{config_path}\\\"\" start= auto DisplayName= \"{app_name} Service\"
+sc start {app_id}
+sc stop {app_id}
+sc delete {app_id}
 ",
     app_name = crate::get_app_name(),
+    app_id = crate::APP_ID,
     config_path=Config::file().to_str().unwrap_or(""),
 )
 }
@@ -3724,10 +3744,11 @@ if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{ap
 ", app_name = crate::get_app_name())
     } else {
         format!("
-sc create {app_name} binpath= \"\\\"{exe}\\\" --service\" start= auto DisplayName= \"{app_name} Service\"
-sc start {app_name}
+sc create {app_id} binpath= \"\\\"{exe}\\\" --service\" start= auto DisplayName= \"{app_name} Service\"
+sc start {app_id}
 ",
-    app_name = crate::get_app_name())
+    app_name = crate::get_app_name(),
+    app_id = crate::APP_ID)
     }
 }
 
@@ -3938,7 +3959,8 @@ fn get_uninstall_amyuni_idd() -> String {
 
 #[inline]
 pub fn is_self_service_running() -> bool {
-    is_service_running(&crate::get_app_name())
+    // Aurum Nexus: APP_ID - e o nome com que o `sc create` registra o servico.
+    is_service_running(crate::APP_ID)
 }
 
 pub fn is_service_running(service_name: &str) -> bool {
@@ -3969,7 +3991,9 @@ pub fn release_arch_suffix() -> Option<&'static str> {
 pub fn try_kill_rustdesk_main_window_process() -> ResultType<()> {
     // Kill rustdesk.exe without extra arg, should only be called by --server
     // We can find the exact process which occupies the ipc, see more from https://github.com/winsiderss/systeminformer
-    let app_name = crate::get_app_name().to_lowercase();
+    // Aurum Nexus: comparar com o APP_NAME em minuscula dava "aurum nexus", que nao e
+    // nome de processo nenhum - a funcao nunca matava nada. E o nome do executavel.
+    let app_name = crate::APP_ID.to_lowercase();
     log::info!("try kill main window process");
     use hbb_common::sysinfo::System;
     let mut sys = System::new();
