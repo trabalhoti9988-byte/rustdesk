@@ -108,6 +108,13 @@ pub use acl::{
 pub const FLUTTER_RUNNER_WIN32_WINDOW_CLASS: &'static str = "FLUTTER_RUNNER_WIN32_WINDOW"; // main window, install window
 pub const EXPLORER_EXE: &'static str = "explorer.exe";
 pub const SET_FOREGROUND_WINDOW: &'static str = "SET_FOREGROUND_WINDOW";
+// Aurum Nexus: o nome do arquivo NAO da para derivar do APP_NAME. O nosso APP_NAME
+// tem espaco ("Aurum Nexus") e o executavel nao ("AurumNexus.exe"); no RustDesk os
+// dois batiam por acidente, porque "RustDesk.exe" e "rustdesk.exe" sao o mesmo
+// arquivo para o Windows. Com espaco no meio deixam de ser, e o instalador criava
+// atalho e servico apontando para um arquivo inexistente.
+// Tem que ser igual ao BINARY_NAME de flutter/windows/CMakeLists.txt.
+pub const EXE_FILE_NAME: &'static str = "AurumNexus.exe";
 
 const REG_NAME_INSTALL_DESKTOPSHORTCUTS: &str = "DESKTOPSHORTCUTS";
 const REG_NAME_INSTALL_STARTMENUSHORTCUTS: &str = "STARTMENUSHORTCUTS";
@@ -1430,7 +1437,7 @@ fn get_install_info_with_subkey(subkey: String) -> (String, String, String, Stri
         "%ProgramData%\\Microsoft\\Windows\\Start Menu\\Programs\\{}",
         crate::get_app_name()
     );
-    let exe = format!("{}\\{}.exe", path, crate::get_app_name());
+    let exe = format!("{}\\{}", path, EXE_FILE_NAME);
     (subkey, path, start_menu, exe)
 }
 
@@ -1466,13 +1473,15 @@ pub fn rename_exe_cmd(src_exe: &str, path: &str) -> ResultType<String> {
         .ok_or(anyhow!("Can't get file name of {src_exe}"))?
         .to_string_lossy()
         .to_string();
-    let app_name = crate::get_app_name().to_lowercase();
-    if src_exe_filename.to_lowercase() == format!("{app_name}.exe") {
+    // Aurum Nexus: comparava e renomeava para "{app_name}.exe", o que no nosso caso
+    // daria "aurum nexus.exe" - nome que ninguem mais procura. Ver EXE_FILE_NAME.
+    let exe_name = EXE_FILE_NAME;
+    if src_exe_filename.to_lowercase() == exe_name.to_lowercase() {
         Ok("".to_owned())
     } else {
         Ok(format!(
             "
-        move /Y \"{path}\\{src_exe_filename}\" \"{path}\\{app_name}.exe\"
+        move /Y \"{path}\\{src_exe_filename}\" \"{path}\\{exe_name}\"
         ",
         ))
     }
@@ -3267,7 +3276,7 @@ pub fn update_me(debug: bool) -> ResultType<()> {
         bail!("{} is not installed.", &app_name);
     }
 
-    let app_exe_name = &format!("{}.exe", &app_name);
+    let app_exe_name = &EXE_FILE_NAME.to_owned();
     let main_window_pids =
         crate::platform::get_pids_of_process_with_args::<_, &str>(&app_exe_name, &[]);
     let main_window_sessions = main_window_pids
@@ -3727,7 +3736,9 @@ fn run_after_run_cmds(silent: bool) {
     if !silent {
         log::debug!("Spawn new window");
         allow_err!(std::process::Command::new("cmd")
-            .args(&["/c", "timeout", "/t", "2", "&", &format!("{exe}")])
+            // Aurum Nexus: o caminho vai entre aspas. Sem elas o cmd corta em
+            // "C:\Program" e a janela nunca voltava depois de instalar.
+            .args(&["/c", "timeout", "/t", "2", "&", &format!("\"{exe}\"")])
             .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
             .spawn());
     }

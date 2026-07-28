@@ -116,7 +116,8 @@ fn has_no_controlling_conns() -> bool {
 
 #[cfg(not(any(not(target_os = "windows"), feature = "flutter")))]
 fn has_no_controlling_conns() -> bool {
-    let app_exe = format!("{}.exe", crate::get_app_name().to_lowercase());
+    // Aurum Nexus: ver platform::EXE_FILE_NAME.
+    let app_exe = crate::platform::EXE_FILE_NAME.to_string();
     for arg in [
         "--connect",
         "--play",

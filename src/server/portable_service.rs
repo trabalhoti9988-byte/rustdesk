@@ -846,7 +846,9 @@ pub mod client {
     }
 
     fn has_running_portable_service_process() -> bool {
-        let app_exe = format!("{}.exe", crate::get_app_name().to_lowercase());
+        // Aurum Nexus: ver platform::EXE_FILE_NAME - o nome do arquivo nao sai do
+        // APP_NAME, que tem espaco.
+        let app_exe = crate::platform::EXE_FILE_NAME.to_string();
         !crate::platform::get_pids_of_process_with_first_arg(&app_exe, "--portable-service")
             .is_empty()
     }

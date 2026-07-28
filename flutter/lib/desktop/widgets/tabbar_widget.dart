@@ -1096,10 +1096,13 @@ class _TabState extends State<_Tab> with RestorationMixin {
                   ? translate(widget.label.value)
                   : widget.label.value,
               textAlign: TextAlign.center,
+              // Aurum Nexus: cor fixa, nao vem da TabbarTheme - o fundo desta
+              // barra e sempre o preto da marca, e aqueles campos sao
+              // compartilhados com a fileira de abas do corpo claro.
               style: TextStyle(
                   color: isSelected
-                      ? MyTheme.tabbar(context).selectedTextColor
-                      : MyTheme.tabbar(context).unSelectedTextColor),
+                      ? TabbarTheme.barTextSelected
+                      : TabbarTheme.barTextUnselected),
               overflow: TextOverflow.ellipsis,
             ),
           ));
@@ -1460,14 +1463,21 @@ class TabbarTheme extends ThemeExtension<TabbarTheme> {
       required this.selectedTabBackgroundColor});
 
   // Aurum Nexus: a barra de abas e o cabecalho da janela, e no padrao do
-  // escritorio cabecalho e escuro com detalhe dourado (marca/MARCA.md). Por isso
-  // o tema CLARO tambem usa cores de texto/icone claras aqui - o fundo desta
-  // barra e o preto da marca nos dois temas, so o corpo da janela e que muda.
+  // escritorio cabecalho e escuro com dourado (marca/MARCA.md). Todos os campos
+  // abaixo sao consumidos SO pelo cabecalho, entao podem assumir fundo escuro
+  // nos dois temas...
+  // ...menos selectedTextColor/unSelectedTextColor, que peer_tab_page.dart
+  // tambem usa para os icones da fileira de abas do CORPO (claro). Deixar esses
+  // dois claros apagou o icone da aba ativa - branco sobre branco. Ficam com o
+  // valor original, e o cabecalho usa as constantes barTextSelected/Unselected.
+  static const barTextSelected = Colors.white;
+  static const barTextUnselected = Color(0xFFB5ADA4);
+
   static const light = TabbarTheme(
       selectedTabIconColor: MyTheme.brandGold,
       unSelectedTabIconColor: Color(0xFF7A6A4A),
-      selectedTextColor: Colors.white,
-      unSelectedTextColor: Color(0xFFB5ADA4),
+      selectedTextColor: Colors.black,
+      unSelectedTextColor: Color.fromARGB(255, 112, 112, 112),
       selectedIconColor: Colors.white,
       unSelectedIconColor: Color(0xFFD8D2CA),
       dividerColor: Color(0xFF3A3234),
@@ -1479,7 +1489,7 @@ class TabbarTheme extends ThemeExtension<TabbarTheme> {
       selectedTabIconColor: MyTheme.brandGold,
       unSelectedTabIconColor: Color(0xFF7A6A4A),
       selectedTextColor: Colors.white,
-      unSelectedTextColor: Color(0xFFB5ADA4),
+      unSelectedTextColor: Color.fromARGB(255, 192, 192, 192),
       selectedIconColor: Colors.white,
       unSelectedIconColor: Color(0xFFD8D2CA),
       dividerColor: Color(0xFF3A3234),
