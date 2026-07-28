@@ -250,19 +250,27 @@ class ColorThemeExtension extends ThemeExtension<ColorThemeExtension> {
 class MyTheme {
   MyTheme._();
 
-  static const Color grayBg = Color(0xFFEFEFF2);
-  // Aurum Nexus: dourado da marca (#C7993C) no lugar do azul do RustDesk
-  static const Color accent = Color(0xFFC7993C);
+  // Aurum Nexus: paleta do escritorio (marca/MARCA.md). Regra que manda no
+  // desenho: o dourado #C7993C reprova como TEXTO sobre fundo claro (2,61:1),
+  // entao sobre claro ele so preenche/contorna e o texto dourado usa #8A6A22
+  // (5,04:1). Sobre o preto da marca o dourado passa folgado (6,64:1).
+  static const Color brandBlack = Color(0xFF1F191A);
+  static const Color brandGold = Color(0xFFC7993C);
+  static const Color brandGoldText = Color(0xFF8A6A22);
+  static const Color brandGoldHover = Color(0xFFA87F2E);
+
+  static const Color grayBg = Color(0xFFF7F6F4);
+  static const Color accent = brandGold;
   static const Color accent50 = Color(0x77C7993C);
   static const Color accent80 = Color(0xAAC7993C);
-  static const Color canvasColor = Color(0xFF212121);
-  static const Color border = Color(0xFFCCCCCC);
-  static const Color idColor = Color(0xFF8A6A22);
+  static const Color canvasColor = brandBlack;
+  static const Color border = Color(0xFFE5E2DD);
+  static const Color idColor = brandGoldText;
   static const Color darkGray = Color.fromARGB(255, 148, 148, 148);
   static const Color cmIdColor = Color(0xFF21790B);
-  static const Color dark = Colors.black87;
-  static const Color button = Color(0xFFC7993C);
-  static const Color hoverBorder = Color(0xFF999999);
+  static const Color dark = brandBlack;
+  static const Color button = brandGold;
+  static const Color hoverBorder = brandGoldHover;
 
   // ListTile
   static const ListTileThemeData listTileTheme = ListTileThemeData(
@@ -454,8 +462,10 @@ class MyTheme {
     menuBarTheme: MenuBarThemeData(
         style:
             MenuStyle(backgroundColor: MaterialStatePropertyAll(Colors.white))),
+    // Aurum Nexus: primary era azul. No tema claro tem que ser o dourado
+    // escurecido, porque primary tambem pinta TEXTO (foreground de TextButton).
     colorScheme: ColorScheme.light(
-        primary: Colors.blue, secondary: accent, background: grayBg),
+        primary: brandGoldText, secondary: accent, background: grayBg),
     popupMenuTheme: PopupMenuThemeData(
         color: Colors.white,
         shape: RoundedRectangleBorder(
@@ -474,9 +484,11 @@ class MyTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: false,
     brightness: Brightness.dark,
-    hoverColor: Color.fromARGB(255, 45, 46, 53),
-    scaffoldBackgroundColor: Color(0xFF18191E),
-    dialogBackgroundColor: Color(0xFF18191E),
+    hoverColor: Color(0xFF3A3234),
+    // Aurum Nexus: o cinza-azulado do RustDesk (#18191E) trocado pelo preto
+    // quente da marca.
+    scaffoldBackgroundColor: brandBlack,
+    dialogBackgroundColor: brandBlack,
     appBarTheme: AppBarTheme(
       shadowColor: Colors.transparent,
     ),
@@ -512,7 +524,7 @@ class MyTheme {
         color: accent80,
       ),
     ),
-    cardColor: Color(0xFF24252B),
+    cardColor: Color(0xFF2B2426),
     visualDensity: VisualDensity.adaptivePlatformDensity,
     tabBarTheme: const TabBarTheme(
       labelColor: Colors.white70,
@@ -562,10 +574,11 @@ class MyTheme {
     menuBarTheme: MenuBarThemeData(
         style: MenuStyle(
             backgroundColor: MaterialStatePropertyAll(Color(0xFF121212)))),
+    // Aurum Nexus: sobre fundo escuro o dourado da marca pode ser texto.
     colorScheme: ColorScheme.dark(
-      primary: Colors.blue,
+      primary: brandGold,
       secondary: accent,
-      background: Color(0xFF24252B),
+      background: Color(0xFF2B2426),
     ),
     popupMenuTheme: PopupMenuThemeData(
         shape: RoundedRectangleBorder(
@@ -1152,8 +1165,12 @@ Widget createDialogContent(String text) {
     }
     spans.add(TextSpan(
       text: match.group(0) ?? '',
+      // ponytail: dourado escuro fixo. Passa contraste sobre o branco do tema
+      // claro (5,04:1), que e o padrao; no tema escuro fica fraco (3,4:1) mas o
+      // link continua sublinhado. Se o tema escuro virar o padrao, trocar por
+      // Theme.of(context).colorScheme.primary - exige passar o context ate aqui.
       style: const TextStyle(
-        color: Colors.blue,
+        color: MyTheme.brandGoldText,
         decoration: TextDecoration.underline,
       ),
       recognizer: TapGestureRecognizer()

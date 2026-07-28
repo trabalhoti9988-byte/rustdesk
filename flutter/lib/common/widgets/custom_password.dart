@@ -121,7 +121,9 @@ class PasswordStrengthIndicator extends StatelessWidget {
     if (strength < weakMedium) {
       return Colors.yellow;
     } else if (strength < mediumStrong) {
-      return Colors.blue;
+      // Aurum Nexus: era azul. Laranja tambem diz mais num medidor de forca:
+      // amarelo -> laranja -> verde.
+      return Colors.orange;
     } else {
       return Colors.green;
     }

@@ -515,8 +515,12 @@ class _DesktopTabState extends State<DesktopTab>
         if (stateGlobal.showTabBar.isTrue &&
             !(kUseCompatibleUiMode && isHideSingleItem())) {
           final showBottomDivider = _showTabBarBottomDivider(tabType);
-          return SizedBox(
+          return Container(
             height: _kTabBarHeight,
+            // Aurum Nexus: cabecalho no preto da marca. As cores de texto e
+            // icone da barra vem de TabbarTheme, ja ajustadas para fundo escuro
+            // nos dois temas.
+            color: MyTheme.brandBlack,
             child: Column(
               children: [
                 SizedBox(
@@ -1455,29 +1459,33 @@ class TabbarTheme extends ThemeExtension<TabbarTheme> {
       required this.closeHoverColor,
       required this.selectedTabBackgroundColor});
 
+  // Aurum Nexus: a barra de abas e o cabecalho da janela, e no padrao do
+  // escritorio cabecalho e escuro com detalhe dourado (marca/MARCA.md). Por isso
+  // o tema CLARO tambem usa cores de texto/icone claras aqui - o fundo desta
+  // barra e o preto da marca nos dois temas, so o corpo da janela e que muda.
   static const light = TabbarTheme(
-      selectedTabIconColor: MyTheme.accent,
-      unSelectedTabIconColor: Color.fromARGB(255, 162, 203, 241),
-      selectedTextColor: Colors.black,
-      unSelectedTextColor: Color.fromARGB(255, 112, 112, 112),
-      selectedIconColor: Color.fromARGB(255, 26, 26, 26),
-      unSelectedIconColor: Color.fromARGB(255, 96, 96, 96),
-      dividerColor: Color.fromARGB(255, 238, 238, 238),
-      hoverColor: Colors.white54,
-      closeHoverColor: Colors.white,
-      selectedTabBackgroundColor: Colors.white54);
+      selectedTabIconColor: MyTheme.brandGold,
+      unSelectedTabIconColor: Color(0xFF7A6A4A),
+      selectedTextColor: Colors.white,
+      unSelectedTextColor: Color(0xFFB5ADA4),
+      selectedIconColor: Colors.white,
+      unSelectedIconColor: Color(0xFFD8D2CA),
+      dividerColor: Color(0xFF3A3234),
+      hoverColor: Colors.white24,
+      closeHoverColor: Colors.white24,
+      selectedTabBackgroundColor: Colors.white12);
 
   static const dark = TabbarTheme(
-      selectedTabIconColor: MyTheme.accent,
-      unSelectedTabIconColor: Color.fromARGB(255, 30, 65, 98),
+      selectedTabIconColor: MyTheme.brandGold,
+      unSelectedTabIconColor: Color(0xFF7A6A4A),
       selectedTextColor: Colors.white,
-      unSelectedTextColor: Color.fromARGB(255, 192, 192, 192),
-      selectedIconColor: Color.fromARGB(255, 192, 192, 192),
-      unSelectedIconColor: Color.fromARGB(255, 255, 255, 255),
-      dividerColor: Color.fromARGB(255, 64, 64, 64),
-      hoverColor: Colors.black26,
-      closeHoverColor: Colors.black,
-      selectedTabBackgroundColor: Colors.black26);
+      unSelectedTextColor: Color(0xFFB5ADA4),
+      selectedIconColor: Colors.white,
+      unSelectedIconColor: Color(0xFFD8D2CA),
+      dividerColor: Color(0xFF3A3234),
+      hoverColor: Colors.white24,
+      closeHoverColor: Colors.white24,
+      selectedTabBackgroundColor: Colors.white12);
 
   @override
   ThemeExtension<TabbarTheme> copyWith({
