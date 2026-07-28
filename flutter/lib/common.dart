@@ -3747,27 +3747,10 @@ Color? disabledTextColor(BuildContext context, bool enabled) {
 }
 
 Widget loadPowered(BuildContext context) {
-  if (bind.mainGetBuildinOption(key: "hide-powered-by-me") == 'Y') {
-    return SizedBox.shrink();
-  }
-  return MouseRegion(
-    cursor: SystemMouseCursors.click,
-    child: GestureDetector(
-      onTap: () {
-        launchUrl(Uri.parse('https://rustdesk.com'));
-      },
-      child: Opacity(
-          opacity: 0.5,
-          child: Text(
-            translate("powered_by_me"),
-            overflow: TextOverflow.clip,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(fontSize: 9, decoration: TextDecoration.underline),
-          )),
-    ),
-  ).marginOnly(top: 6);
+  // Aurum Nexus: nada aqui. E o mesmo efeito da opcao "hide-powered-by-me" que o
+  // proprio RustDesk oferece para clientes customizados - o texto era um link para
+  // rustdesk.com. O credito e a licenca AGPL continuam no cartao "Sobre".
+  return SizedBox.shrink();
 }
 
 const _kDefaultLogoAsset = 'assets/logo.png';

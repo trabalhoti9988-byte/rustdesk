@@ -2031,7 +2031,13 @@ pub fn create_symmetric_key_msg(their_pk_b: [u8; 32]) -> (Bytes, Bytes, secretbo
 
 #[inline]
 pub fn using_public_server() -> bool {
-    crate::get_custom_rendezvous_server(get_option("custom-rendezvous-server")).is_empty()
+    // Aurum Nexus: o nosso servidor esta embutido em RENDEZVOUS_SERVERS, nao em
+    // "custom-rendezvous-server", entao a checagem original nos classificava como
+    // servidor publico do RustDesk. Efeitos que isso causava: a tela inicial
+    // oferecia "configure seu proprio servidor", a qualidade de imagem era cortada
+    // em 100 e o registro entrava em backoff exponencial (medidas para aliviar o
+    // servidor publico deles, nao o nosso).
+    false
 }
 
 pub struct ThrottledInterval {

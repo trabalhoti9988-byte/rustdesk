@@ -610,8 +610,11 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: [
-                  Color.fromARGB(255, 226, 66, 188),
-                  Color.fromARGB(255, 244, 114, 124),
+                  // Aurum Nexus: preto -> marrom-dourado escuro no lugar do rosa.
+                  // Tons escuros de proposito, porque o texto do cartao e branco e
+                  // branco sobre o dourado #C7993C nao passa de contraste.
+                  Color.fromARGB(255, 31, 25, 26),
+                  Color.fromARGB(255, 74, 58, 22),
                 ],
               )),
               padding: EdgeInsets.all(20),
