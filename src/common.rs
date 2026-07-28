@@ -948,10 +948,33 @@ pub fn check_software_update() {
     }
 }
 
+// Aurum Nexus: a checagem de versao esta DESLIGADA de proposito.
+// Ela faz POST em https://api.rustdesk.com/version/latest mandando os, os_version,
+// arch e device_id (fingerprint da maquina) - ou seja, cada maquina do escritorio se
+// reportando para a infra do RustDesk, sem nada em troca: o resultado alimenta um
+// cartao que nem aparece no nosso build, porque ele exige
+// `mainUriPrefixSync().contains('rustdesk')` e o nosso prefixo e "aurum nexus://".
+// Escritorio de advocacia, maquina de cliente: telemetria muda para ninguem.
+// O guard `is_custom_client()` de `check_software_update` nao pega: ele e do mecanismo
+// de cliente customizado (Pro), falso num fork compilado do fonte. Por isso o corte
+// esta aqui, que e por onde passam os 4 chamadores - a janela, o flutter_ffi, a
+// checagem manual e a automatica, que `rendezvous_mediator` dispara a cada conexao com
+// o servidor (era o caminho que rodava sozinho).
+// NAO confundir com o cartao "Your installation is lower version.": esse e comparacao
+// LOCAL (`main_is_installed_lower_version`) entre a copia instalada e a que esta
+// rodando, nao tem rede nenhuma, e o botao dele chama `update_me` - que e nosso.
+// Se um dia houver atualizacao propria, e aqui que ela entra: apontar para o nosso
+// central (`/api/versao`, que o AurumNexusCentral ja serve) em vez de devolver vazio.
+const CONSULTAR_API_RUSTDESK: bool = false;
+
 // No need to check `danger_accept_invalid_cert` for now.
 // Because the url is always `https://api.rustdesk.com/version/latest`.
 #[tokio::main(flavor = "current_thread")]
 pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
+    if !CONSULTAR_API_RUSTDESK {
+        *SOFTWARE_UPDATE_URL.lock().unwrap() = "".to_string();
+        return Ok(());
+    }
     let (request, url) =
         hbb_common::version_check_request(hbb_common::VER_TYPE_RUSTDESK_CLIENT.to_string());
     let proxy_conf = Config::get_socks();
