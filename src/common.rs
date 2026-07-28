@@ -957,9 +957,14 @@ pub fn check_software_update() {
 // Escritorio de advocacia, maquina de cliente: telemetria muda para ninguem.
 // O guard `is_custom_client()` de `check_software_update` nao pega: ele e do mecanismo
 // de cliente customizado (Pro), falso num fork compilado do fonte. Por isso o corte
-// esta aqui, que e por onde passam os 4 chamadores - a janela, o flutter_ffi, a
-// checagem manual e a automatica, que `rendezvous_mediator` dispara a cada conexao com
-// o servidor (era o caminho que rodava sozinho).
+// esta aqui, que e por onde passam os 4 chamadores. Quando cada um dispara:
+//   - `main_get_software_update_url` (flutter_ffi) e `ui.rs` -> ao abrir a janela,
+//     inclusive na copia portatil. E o que rodou nos nossos testes.
+//   - `updater::start_auto_update`, chamado por `RendezvousMediator::start_all` so
+//     quando `is_installed() && is_server()`: sobe uma thread que espera
+//     INITIAL_CHECK_DELAY e depois fica em laco. Esse e o que roda sem ninguem pedir,
+//     na maquina instalada.
+//   - `manually_check_update`, do menu.
 // NAO confundir com o cartao "Your installation is lower version.": esse e comparacao
 // LOCAL (`main_is_installed_lower_version`) entre a copia instalada e a que esta
 // rodando, nao tem rede nenhuma, e o botao dele chama `update_me` - que e nosso.
