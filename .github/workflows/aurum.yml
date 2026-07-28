@@ -7,6 +7,11 @@ name: Aurum Nexus - Windows x64
 
 on:
   workflow_dispatch:
+  # Tambem por tag: `git push aurum build-<n>` compila. Serve para disparar a build
+  # de dentro do repositorio, com um comando, sem passar pelo navegador.
+  push:
+    tags:
+      - "build-*"
 
 env:
   RUST_VERSION: "1.75"
