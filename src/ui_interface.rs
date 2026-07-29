@@ -567,6 +567,13 @@ pub fn is_installed_lower_version() -> bool {
     #[cfg(windows)]
     {
         let b = crate::platform::windows::get_reg("BuildDate");
+        // Aurum Nexus: sem BuildDate no registro nao da para comparar nada, e "" perde de
+        // qualquer data - o card "versao desatualizada" ficava fixo em toda instalacao que
+        // nao escreveu a chave (foi o caso das instaladas com o nome "Aurum Nexus", com
+        // espaco, antes da correcao em get_valid_subkey). Sem dado = sem alarme.
+        if b.is_empty() {
+            return false;
+        }
         return crate::BUILD_DATE.cmp(&b).is_gt();
     }
 }

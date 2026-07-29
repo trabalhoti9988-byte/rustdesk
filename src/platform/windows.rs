@@ -3849,7 +3849,8 @@ pub fn message_box(text: &str) {
         .encode_utf16()
         .chain(std::iter::once(0))
         .collect::<Vec<u16>>();
-    let caption = "RustDesk Output"
+    // Aurum Nexus: titulo pela marca, senao a caixa aparece como "RustDesk Output".
+    let caption = format!("{} - aviso", crate::get_app_name())
         .encode_utf16()
         .chain(std::iter::once(0))
         .collect::<Vec<u16>>();

@@ -595,6 +595,21 @@ pub async fn start_server(is_server: bool, no_server: bool) {
                 if crate::is_server() {
                     log::error!("ipc is occupied by another process, try kill it");
                     std::thread::spawn(stop_main_window_process).join().ok();
+                } else {
+                    // Aurum Nexus: aqui o app fechava sem dizer nada - o unico rastro era a
+                    // linha de log acima. Cai neste caminho quando outra copia (a portatil,
+                    // rodando de outro diretorio) ja e dona do pipe: a segunda instancia leva
+                    // "Acesso negado (os error 5)". So no ramo `else` porque no processo
+                    // `--server` a caixa abriria invisivel na sessao 0 e travaria a thread
+                    // antes do exit.
+                    // ponytail: texto fixo em pt-BR, sem chave de traducao - se o app sair em
+                    // outro idioma, trocar por `translate()` e criar a chave nos lang/*.rs.
+                    #[cfg(windows)]
+                    crate::platform::windows::message_box(&format!(
+                        "Nao foi possivel iniciar o {}: outra copia do programa ja esta em execucao nesta maquina. Feche a outra copia (ou reinicie o computador) e abra novamente.\n\nDetalhe tecnico: {}!",
+                        crate::get_app_name(),
+                        err
+                    ));
                 }
                 std::process::exit(-1);
             }
