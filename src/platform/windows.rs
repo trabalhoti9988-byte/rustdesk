@@ -1594,6 +1594,14 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
     let app_name = crate::get_app_name();
 
     let current_exe = std::env::current_exe()?;
+    // Aurum Nexus: o script abaixo roda o uninstall (rd /s /q no destino) ANTES do
+    // XCOPY. Instalando de dentro da pasta instalada, a origem e o destino apagado -
+    // foi assim que sumiram 86 arquivos em 29/07. Recusar em vez de destruir.
+    if let Some(dir) = current_exe.parent() {
+        if dir.to_string_lossy().trim_end_matches('\\').to_lowercase() == path.to_lowercase() {
+            bail!("Instalacao a partir da propria pasta instalada ({path}); use o instalador baixado.");
+        }
+    }
 
     let tmp_path = std::env::temp_dir().to_string_lossy().to_string();
     let cur_exe = current_exe.to_str().unwrap_or("").to_owned();

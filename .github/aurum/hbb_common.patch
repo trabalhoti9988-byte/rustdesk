@@ -17,11 +17,11 @@ index 707bbe0..7093074 100644
  
 -pub const RENDEZVOUS_SERVERS: &[&str] = &["rs-ny.rustdesk.com"];
 -pub const RS_PUB_KEY: &str = "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=";
-+// Aurum Nexus: servidor proprio do escritorio. Trocar para aurum.fagundesadv.com.br
-+// quando o DNS estiver apontado; o IP interno serve o piloto. A chave e a que o nosso
-+// hbbs gerou (server/data/id_ed25519.pub) - se o servidor for recriado, atualizar aqui.
-+pub const RENDEZVOUS_SERVERS: &[&str] = &["192.168.0.90"];
-+pub const RS_PUB_KEY: &str = "opy7zy0vlJLPTOasvf9MaKVvr8gvY4odpII5F0yXBRs=";
++// Aurum Nexus: servidor proprio do escritorio, no Atrio (192.168.0.67) desde 19/10/2026.
++// A chave e a que o hbbs do Atrio gerou (id_ed25519.pub do servidor) - se o servidor
++// for recriado, atualizar aqui.
++pub const RENDEZVOUS_SERVERS: &[&str] = &["aurum.fagundesadv.com.br"];
++pub const RS_PUB_KEY: &str = "WYW9MeOO8NUNksg2B+nm+zCAXcMNGgr1gvJjqL2vi7c=";
  
  pub const RENDEZVOUS_PORT: i32 = 21116;
  pub const RELAY_PORT: i32 = 21117;

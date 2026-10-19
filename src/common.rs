@@ -2129,6 +2129,19 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
 }
 
 pub fn load_custom_client() {
+    // Aurum Nexus: padroes do escritorio. O custom.txt nao serve (exige assinatura
+    // com a chave do RustDesk), entao vao aqui. Sao padroes: o usuario ainda muda.
+    // - direct-server: conexao direta na LAN (porta 21118), sem depender do servidor.
+    // - image_quality best: o "balanced" trava em 67% do bitrate base (~1,4 Mbps em
+    //   1080p) e deixa texto borrado; o QoS ainda baixa sozinho se a rede apertar.
+    config::DEFAULT_SETTINGS
+        .write()
+        .unwrap()
+        .insert(keys::OPTION_DIRECT_SERVER.to_owned(), "Y".to_owned());
+    config::DEFAULT_DISPLAY_SETTINGS
+        .write()
+        .unwrap()
+        .insert(keys::OPTION_IMAGE_QUALITY.to_owned(), "best".to_owned());
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
