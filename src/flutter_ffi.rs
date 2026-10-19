@@ -2866,7 +2866,8 @@ pub fn main_get_common(key: String) -> String {
                 },
                 (Ok(true), true) | (Ok(false), _) => {
                     match crate::platform::windows::release_arch_suffix() {
-                        Some(arch) => format!("rustdesk-{_version}-{arch}.exe"),
+                        // Aurum Nexus: nome que o CI gera (aurum.yml) e o servidor publica.
+                        Some(arch) => format!("AurumNexus-{_version}-{arch}.exe"),
                         None => "error:unsupported".to_owned(),
                     }
                 }

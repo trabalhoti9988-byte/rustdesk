@@ -1589,7 +1589,8 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
         version_minor = versions[1];
     }
     if versions.len() > 2 {
-        version_build = versions[2];
+        // Aurum Nexus: "9-7" (1.4.9-7) nao e DWORD; o build vai so no DisplayVersion.
+        version_build = versions[2].split('-').next().unwrap_or("0");
     }
     let app_name = crate::get_app_name();
 
@@ -3327,7 +3328,8 @@ pub fn update_me(debug: bool) -> ResultType<()> {
         version_minor = versions[1];
     }
     if versions.len() > 2 {
-        version_build = versions[2];
+        // Aurum Nexus: "9-7" (1.4.9-7) nao e DWORD; o build vai so no DisplayVersion.
+        version_build = versions[2].split('-').next().unwrap_or("0");
     }
     let version = crate::VERSION.replace("-", ".");
     let size = get_directory_size_kb(&path);

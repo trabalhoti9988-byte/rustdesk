@@ -948,15 +948,16 @@ pub fn check_software_update() {
     }
 }
 
-// Aurum Nexus: a checagem de versao esta DESLIGADA de proposito.
-// Ela faz POST em https://api.rustdesk.com/version/latest mandando os, os_version,
-// arch e device_id (fingerprint da maquina) - ou seja, cada maquina do escritorio se
-// reportando para a infra do RustDesk, sem nada em troca: o resultado alimenta um
-// cartao que nem aparece no nosso build, porque ele exige
-// `mainUriPrefixSync().contains('rustdesk')` e o nosso prefixo e "aurum nexus://".
-// Escritorio de advocacia, maquina de cliente: telemetria muda para ninguem.
+// Aurum Nexus: a checagem de versao consulta o NOSSO servidor, nunca o RustDesk.
+// O original faz POST em https://api.rustdesk.com/version/latest mandando os, os_version,
+// arch e device_id (fingerprint da maquina) - cada maquina do escritorio se reportando
+// para a infra do RustDesk. Aqui e um GET sem corpo em AURUM_VERSAO_URL, que responde
+// {"url": "https://aurum.fagundesadv.com.br/atualizacao/tag/<versao>"}. O resto do
+// caminho e o do RustDesk, que segue o esquema tag/download do GitHub: o arquivo tem que
+// estar em .../atualizacao/download/<versao>/AurumNexus-<versao>-x86_64.exe.
+// <versao> e a do Cargo.toml (ex. 1.4.9-7); so aparece cartao se for maior que a nossa.
 // O guard `is_custom_client()` de `check_software_update` nao pega: ele e do mecanismo
-// de cliente customizado (Pro), falso num fork compilado do fonte. Por isso o corte
+// de cliente customizado (Pro), falso num fork compilado do fonte. Por isso a troca
 // esta aqui, que e por onde passam os 4 chamadores. Quando cada um dispara:
 //   - `main_get_software_update_url` (flutter_ffi) e `ui.rs` -> ao abrir a janela,
 //     inclusive na copia portatil. E o que rodou nos nossos testes.
@@ -968,27 +969,20 @@ pub fn check_software_update() {
 // NAO confundir com o cartao "Your installation is lower version.": esse e comparacao
 // LOCAL (`main_is_installed_lower_version`) entre a copia instalada e a que esta
 // rodando, nao tem rede nenhuma, e o botao dele chama `update_me` - que e nosso.
-// Se um dia houver atualizacao propria, e aqui que ela entra: apontar para o nosso
-// central (`/api/versao`, que o AurumNexusCentral ja serve) em vez de devolver vazio.
-const CONSULTAR_API_RUSTDESK: bool = false;
+// Sem atualizacao instalada sozinha: `allow-auto-update` segue desligado por padrao,
+// entao a pessoa ve o cartao "nova versao" e decide quando clicar em Atualizar.
+const AURUM_VERSAO_URL: &str = "https://aurum.fagundesadv.com.br/api/versao";
 
-// No need to check `danger_accept_invalid_cert` for now.
-// Because the url is always `https://api.rustdesk.com/version/latest`.
 #[tokio::main(flavor = "current_thread")]
 pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
-    if !CONSULTAR_API_RUSTDESK {
-        *SOFTWARE_UPDATE_URL.lock().unwrap() = "".to_string();
-        return Ok(());
-    }
-    let (request, url) =
-        hbb_common::version_check_request(hbb_common::VER_TYPE_RUSTDESK_CLIENT.to_string());
+    let url = AURUM_VERSAO_URL.to_owned();
     let proxy_conf = Config::get_socks();
     let tls_url = get_url_for_tls(&url, &proxy_conf);
     let tls_type = get_cached_tls_type(tls_url);
     let is_tls_not_cached = tls_type.is_none();
     let tls_type = tls_type.unwrap_or(TlsType::Rustls);
     let client = create_http_client_async(tls_type, false);
-    let latest_release_response = match client.post(&url).json(&request).send().await {
+    let latest_release_response = match client.get(&url).send().await {
         Ok(resp) => {
             upsert_tls_cache(tls_url, tls_type, false);
             resp
@@ -997,7 +991,7 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
             if is_tls_not_cached && err.is_request() {
                 let tls_type = TlsType::NativeTls;
                 let client = create_http_client_async(tls_type, false);
-                let resp = client.post(&url).json(&request).send().await?;
+                let resp = client.get(&url).send().await?;
                 upsert_tls_cache(tls_url, tls_type, false);
                 resp
             } else {

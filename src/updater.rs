@@ -205,7 +205,7 @@ fn check_update(manually: bool) -> ResultType<()> {
                 );
             };
             format!(
-                "{}/rustdesk-{}-{}.{}",
+                "{}/AurumNexus-{}-{}.{}",
                 download_url,
                 version,
                 arch,
