@@ -2132,10 +2132,16 @@ pub fn load_custom_client() {
     // - direct-server: conexao direta na LAN (porta 21118), sem depender do servidor.
     // - image_quality best: o "balanced" trava em 67% do bitrate base (~1,4 Mbps em
     //   1080p) e deixa texto borrado; o QoS ainda baixa sozinho se a rede apertar.
-    config::DEFAULT_SETTINGS
-        .write()
-        .unwrap()
-        .insert(keys::OPTION_DIRECT_SERVER.to_owned(), "Y".to_owned());
+    // - verification-method use-permanent-password: senha so a que o dono criar, como
+    //   no AnyDesk. Com approve-mode "both" (o padrao), sem senha criada a conexao so
+    //   entra se a pessoa clicar em Aceitar (connection.rs, LOGIN_MSG_NO_PASSWORD_ACCESS).
+    let mut settings = config::DEFAULT_SETTINGS.write().unwrap();
+    settings.insert(keys::OPTION_DIRECT_SERVER.to_owned(), "Y".to_owned());
+    settings.insert(
+        keys::OPTION_VERIFICATION_METHOD.to_owned(),
+        "use-permanent-password".to_owned(),
+    );
+    drop(settings);
     config::DEFAULT_DISPLAY_SETTINGS
         .write()
         .unwrap()
