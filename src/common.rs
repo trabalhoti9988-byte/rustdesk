@@ -1036,6 +1036,12 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
 // Tem que ser o EXE_FILE_NAME (platform::windows) sem o ".exe".
 pub const APP_ID: &str = "AurumNexus";
 
+// Aurum Nexus: nome que a pessoa ve em "Aplicativos instalados" do Windows. So texto:
+// NAO trocar o APP_NAME por isso - dele saem pasta de config, pipe e o titulo da janela
+// que o runner procura para nao abrir duas instancias (flutter/windows/runner/main.cpp).
+// Ao mudar a versao de marca, mudar tambem o rotulo da tela inicial (desktop_home_page).
+pub const APP_DISPLAY_NAME: &str = "Aurum Nexus V2";
+
 #[inline]
 pub fn get_app_name() -> String {
     hbb_common::config::APP_NAME.read().unwrap().clone()

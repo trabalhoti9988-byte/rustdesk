@@ -90,6 +90,18 @@ class _DesktopHomePageState extends State<DesktopHomePage>
         alignment: Alignment.center,
         child: loadLogo(),
       ),
+      // Aurum Nexus: versao de marca; acompanha APP_DISPLAY_NAME (src/common.rs).
+      Align(
+        alignment: Alignment.center,
+        child: Text('Aurum Nexus V2',
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.color
+                    ?.withOpacity(0.5))),
+      ),
       buildTip(context),
       if (!isOutgoingOnly) buildIDBoard(context),
       if (!isOutgoingOnly) buildPasswordBoard(context),
