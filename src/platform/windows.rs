@@ -4363,9 +4363,11 @@ fn get_pids<S: AsRef<str>>(name: S) -> ResultType<Vec<u32>> {
 
 pub fn is_msi_installed() -> std::io::Result<bool> {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    // Aurum Nexus: pelo APP_ID - a chave e Uninstall\AurumNexus (ver get_subkey). Pelo
+    // APP_NAME ("Aurum Nexus") nao achava nada, dava erro e o botao Atualizar morria.
     let uninstall_key = hklm.open_subkey(format!(
         "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{}",
-        crate::get_app_name()
+        crate::APP_ID
     ))?;
     Ok(1 == uninstall_key.get_value::<u32, _>("WindowsInstaller")?)
 }
