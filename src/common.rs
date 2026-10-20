@@ -939,9 +939,8 @@ pub fn is_modifier(evt: &KeyEvent) -> bool {
 }
 
 pub fn check_software_update() {
-    if is_custom_client() {
-        return;
-    }
+    // Aurum Nexus: sem o guard `is_custom_client()` - ele e `app_name != "RustDesk"`,
+    // VERDADEIRO para nos, e matava a checagem (testado em 20/10: nenhum GET saia).
     let opt = LocalConfig::get_option(keys::OPTION_ENABLE_CHECK_UPDATE);
     if config::option2bool(keys::OPTION_ENABLE_CHECK_UPDATE, &opt) {
         std::thread::spawn(move || allow_err!(do_check_software_update()));
@@ -956,9 +955,9 @@ pub fn check_software_update() {
 // caminho e o do RustDesk, que segue o esquema tag/download do GitHub: o arquivo tem que
 // estar em .../atualizacao/download/<versao>/AurumNexus-<versao>-x86_64.exe.
 // <versao> e a do Cargo.toml (ex. 1.4.9-7); so aparece cartao se for maior que a nossa.
-// O guard `is_custom_client()` de `check_software_update` nao pega: ele e do mecanismo
-// de cliente customizado (Pro), falso num fork compilado do fonte. Por isso a troca
-// esta aqui, que e por onde passam os 4 chamadores. Quando cada um dispara:
+// `is_custom_client()` e `app_name != "RustDesk"`, ou seja VERDADEIRO no Aurum: o guard
+// dele em `check_software_update`, em `checkUpdate` (common.dart) e no cartao foi tirado.
+// A troca de URL esta aqui, que e por onde passam os 4 chamadores. Quando cada um dispara:
 //   - `main_get_software_update_url` (flutter_ffi) e `ui.rs` -> ao abrir a janela,
 //     inclusive na copia portatil. E o que rodou nos nossos testes.
 //   - `updater::start_auto_update`, chamado por `RendezvousMediator::start_all` so

@@ -444,8 +444,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   Widget buildHelpCards(String updateUrl) {
     // Aurum Nexus: o cartao so vale para a copia instalada, que se atualiza pelo botao.
     // A portatil cairia em "Download" -> rustdesk.com; quem roda portatil usa o instalador.
-    if (!bind.isCustomClient() &&
-        updateUrl.isNotEmpty &&
+    if (updateUrl.isNotEmpty &&
         !isCardClosed &&
         (isWindows || isMacOS) &&
         bind.mainIsInstalled()) {

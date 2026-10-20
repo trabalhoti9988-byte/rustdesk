@@ -257,7 +257,7 @@ class ServerModel with ChangeNotifier {
       // Aurum Nexus: sem senha aleatoria (padrao do escritorio), o quadro explica como
       // se entra em vez de mostrar "-". A senha do dono se cria no lapis ao lado.
       _serverPasswd.text = !stopped && verificationMethod == kUsePermanentPassword
-          ? 'Aceite ou senha do dono'
+          ? 'Aceite ou senha'
           : '-';
     } else {
       if (_serverPasswd.text != temporaryPassword &&

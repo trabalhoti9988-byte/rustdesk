@@ -4082,7 +4082,9 @@ void earlyAssert() {
 
 void checkUpdate() {
   if (!isWeb) {
-    if (!bind.isCustomClient()) {
+    // Aurum Nexus: sem `!bind.isCustomClient()` - e verdadeiro para qualquer app que
+    // nao se chame "RustDesk", e desligava o aviso de atualizacao (ver common.rs).
+    {
       platformFFI.registerEventHandler(
           kCheckSoftwareUpdateFinish, kCheckSoftwareUpdateFinish,
           (Map<String, dynamic> evt) async {
