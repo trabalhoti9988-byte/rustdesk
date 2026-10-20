@@ -1,0 +1,142 @@
+﻿AURUM NEXUS V2 (versao 1.4.9-7) - INSTRUCOES PARA A CLAUDIA
+==========================================================
+
+Claudia, este pacote foi preparado pelo Rafael (TI) com o Claude, em 19 e 20/10/2026.
+Aqui esta tudo o que foi feito no Aurum Nexus e o que voce precisa fazer no
+servidor Atrio para colocar a V2 em uso no escritorio.
+
+O detalhe tecnico completo (arquivos, linhas, motivos) esta em LEIA-ME-BUILD7.md,
+nesta mesma pasta.
+
+
+1. O QUE TEM NESTA PASTA
+------------------------
+  AurumNexus-1.4.9-7-x86_64.exe   Instalador pronto da V2. Ja vem com o servidor
+                                   aurum.fagundesadv.com.br e a chave embutidos:
+                                   NAO precisa de "host=" no nome do arquivo.
+  patches\0001...0009-*.patch      Os 9 commits da V2 (git format-patch), em cima
+                                   do commit 8f91d53 (build-6), branch "aurum".
+  LEIA-ME-BUILD7.md                Explicacao tecnica completa.
+  estudo\                          Estudo de como o AnyDesk funciona e a
+                                   comparacao com o Aurum (de onde vieram as ideias).
+
+O mesmo codigo tambem foi enviado ao GitHub:
+  https://github.com/trabalhoti9988-byte/rustdesk  (branch "aurum")
+O instalador .exe NAO vai para o GitHub: o repositorio e publico e o exe leva o
+endereco e a chave do servidor do escritorio. Use o exe desta pasta.
+
+
+2. O QUE MUDOU NA V2
+--------------------
+  - Servidor: aponta para o Atrio (aurum.fagundesadv.com.br). O servidor antigo
+    no PC do Rafael (192.168.0.90) foi desligado e nao volta.
+  - Conexao direta pela rede local ligada por padrao (porta 21118), sem depender
+    do relay dentro do escritorio.
+  - Qualidade de imagem "Melhor" por padrao (o "Equilibrado" deixava texto borrado).
+  - Senha igual ao AnyDesk: nao existe mais senha aleatoria.
+      * Sem senha criada: so entra se a pessoa clicar em ACEITAR.
+      * Com senha criada pelo dono (lapis ao lado de "Senha"): ID + senha entra direto.
+  - Nome "Aurum Nexus V2" em "Aplicativos instalados" do Windows e na tela inicial.
+  - Aviso de atualizacao: quando sair versao nova, aparece o cartao
+    "Nova versao disponivel" com o botao ATUALIZAR (nada instala sozinho).
+  - "Parar servico" escondido (o clique desinstalava o servico e a maquina sumia).
+  - O instalador recusa rodar de dentro da propria pasta instalada (isso apagou
+    86 arquivos em 29/07).
+
+
+3. O QUE JA FOI TESTADO (no PC do Rafael)
+-----------------------------------------
+  OK  Registra no Atrio (latencia 1-3 ms).
+  OK  Conexao direta pela rede local, nos dois sentidos, sem relay.
+  OK  Senha do dono: o Matheus entrou no PC do Rafael com ID + senha.
+  OK  Nome "Aurum Nexus V2" no Windows (versao 1.4.9.7) e na tela.
+  OK  Instalar por cima da V1 mantem a configuracao.
+  OK  Instalar de dentro da pasta instalada e recusado sem apagar nada.
+  OK  Cartao "Nova versao" aparece (testado com servidor falso).
+  FALTA  Baixar e reinstalar pelo botao Atualizar: o app so baixa por HTTPS e o
+         servidor de teste era HTTP. Esse teste so da para fazer no Atrio
+         (ver tarefa 4.3 abaixo).
+
+
+4. O QUE VOCE PRECISA FAZER
+---------------------------
+
+4.1 Conferir a chave do servidor
+    No Atrio, abra o id_ed25519.pub da pasta de dados do hbbs. Tem que ser:
+        WYW9MeOO8NUNksg2B+nm+zCAXcMNGgr1gvJjqL2vi7c=
+    (Ja foi testado: o Atrio respondeu normalmente com essa chave. Confira mesmo assim.)
+    Aproveite e veja se o hbbs roda com "-r <endereco do relay>". Sem isso, a
+    conexao pode demorar 18 s para cair no relay.
+
+4.2 Criar 2 rotas PUBLICAS no https://aurum.fagundesadv.com.br
+    Hoje tudo nesse endereco responde 401 "sem sessao". O Aurum nao faz login,
+    entao estas duas rotas tem que funcionar SEM login:
+
+    a) GET /api/versao
+       Resposta (JSON, so o campo url):
+       {"url": "https://aurum.fagundesadv.com.br/atualizacao/tag/1.4.9-7"}
+       A versao e o que vem depois da ultima "/". O app so mostra o aviso
+       quando essa versao e MAIOR que a dele.
+
+    b) GET e HEAD /atualizacao/download/<versao>/AurumNexus-<versao>-x86_64.exe
+       Entrega o arquivo do instalador.
+       - O HEAD precisa devolver Content-Length.
+       - No FastAPI: @app.api_route(..., methods=["GET", "HEAD"]) + FileResponse.
+       - OBRIGATORIO: HTTPS, no mesmo endereco https://aurum.fagundesadv.com.br,
+         sem porta escrita, sem "?" e sem "#". O app recusa qualquer outra coisa
+         de proposito (seguranca).
+
+    Para comecar: coloque o exe desta pasta em
+        /atualizacao/download/1.4.9-7/AurumNexus-1.4.9-7-x86_64.exe
+
+4.3 Testar o botao Atualizar (o teste que falta)
+    1. Publique uma versao "1.4.9-8" de mentira: copie o mesmo exe para
+       /atualizacao/download/1.4.9-8/AurumNexus-1.4.9-8-x86_64.exe
+       e faca o /api/versao responder .../atualizacao/tag/1.4.9-8
+    2. Numa maquina com a V2 instalada, abra o Aurum: o cartao
+       "Nova versao disponivel (1.4.9-8)" tem que aparecer.
+    3. Clique em ATUALIZAR: tem que baixar, pedir o UAC e reinstalar.
+    4. Volte o /api/versao para 1.4.9-7.
+    Se der "Falha no download", o log do cliente fica em
+    %AppData%\Aurum Nexus\log\AurumNexus_rCURRENT.log (procure "Download").
+
+4.4 Instalar a V2 nas maquinas (uma vez)
+    A V1 nao tem o aviso de atualizacao, entao cada maquina precisa receber a V2
+    na mao uma unica vez. Depois disso elas mesmas avisam as proximas versoes.
+    - Pelo Teams, mande o exe zipado (o Teams barra .exe solto).
+    - Instalar pede o UAC (senha de administrador se o usuario nao for admin).
+    - A maquina pode ganhar um ID novo na instalacao.
+    - ATENCAO, muda o uso da TI: o acesso sem ninguem na frente da maquina so
+      funciona onde alguem CRIOU a senha permanente.
+
+
+5. TODAS AS ATUALIZACOES FUTURAS (nao e so para esta)
+-----------------------------------------------------
+Depois que as maquinas tiverem a V2, publicar uma versao nova e sempre:
+  1. SUBIR A VERSAO no codigo: Cargo.toml (linha "version"), Cargo.lock (pacote
+     "rustdesk") e VERSION em .github/workflows/aurum.yml.
+     Ex.: 1.4.9-7 -> 1.4.9-8 -> 1.4.9-9 -> 1.4.10
+     SE A VERSAO NAO SUBIR, NINGUEM RECEBE O AVISO.
+  2. Compilar:
+     - pelo GitHub: git push aurum refs/tags/build-<n> (Actions "Aurum Nexus - Windows x64");
+     - ou no PC do Rafael: powershell -File F:\aurum-toolchain\compilar.ps1 (~10 min).
+  3. No Atrio: colocar o exe em /atualizacao/download/<versao>/ e trocar a
+     versao no /api/versao.
+  4. Pronto: cada maquina mostra o cartao quando a pessoa abrir o Aurum.
+
+
+6. SE PRECISAR APLICAR O CODIGO (em vez de usar o exe pronto)
+-------------------------------------------------------------
+  Pelo GitHub: o branch "aurum" ja tem os 9 commits.
+  Pelos patches desta pasta:
+      git checkout aurum            (tem que estar em 8f91d53)
+      git am patches/00*.patch
+      git -C libs/hbb_common apply --check ../../.github/aurum/hbb_common.patch
+  NAO publique "release" no GitHub (repositorio publico + exe com a chave).
+
+
+7. SE ALGO DER ERRADO
+---------------------
+  - Voltar uma maquina: reinstalar o instalador da build-6 (V1).
+  - Voltar o codigo: git revert dos commits.
+  - Duvidas: falar com o Rafael (TI).
