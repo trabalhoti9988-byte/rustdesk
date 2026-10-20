@@ -2152,6 +2152,13 @@ pub fn load_custom_client() {
         .write()
         .unwrap()
         .insert(keys::OPTION_IMAGE_QUALITY.to_owned(), "best".to_owned());
+    // - hide-stop-service: "Parar servico" (bandeja e Configuracoes) DESINSTALA o servico
+    //   (tray.rs -> uninstall_service) e a maquina some do Aurum ate alguem reinstalar.
+    //   Aconteceu no PC da TI em 19/10 com um clique. "Iniciar servico" continua visivel.
+    config::BUILTIN_SETTINGS
+        .write()
+        .unwrap()
+        .insert(keys::OPTION_HIDE_STOP_SERVICE.to_owned(), "Y".to_owned());
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
