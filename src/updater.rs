@@ -354,14 +354,20 @@ fn update_new_version(update_msi: bool, version: &str, file_path: &PathBuf) {
 }
 
 pub fn get_update_download_file_from_url(url: &str) -> Option<PathBuf> {
+    // Aurum Nexus: o original so aceitava https://github.com/rustdesk/rustdesk/releases/
+    // download/<tag>/<arquivo> - com isso o botao Atualizar nunca baixava do nosso
+    // servidor. A regra continua estrita, so que para a MESMA origem da URL de versao
+    // (common::aurum_versao_url) e o caminho /atualizacao/download/<tag>/<arquivo>.
     let parsed = url::Url::parse(url).ok()?;
+    let origin = url::Url::parse(&crate::common::aurum_versao_url())
+        .ok()?
+        .origin()
+        .ascii_serialization();
     // Check the raw prefix before Url normalizes default ports.
-    if !url.starts_with("https://github.com/")
-        || parsed.scheme() != "https"
-        || parsed.host_str() != Some("github.com")
+    if !url.starts_with(&format!("{origin}/"))
+        || parsed.origin().ascii_serialization() != origin
         || !parsed.username().is_empty()
         || parsed.password().is_some()
-        || parsed.port().is_some()
         || parsed.query().is_some()
         || parsed.fragment().is_some()
     {
@@ -369,16 +375,12 @@ pub fn get_update_download_file_from_url(url: &str) -> Option<PathBuf> {
     }
 
     let mut segments = parsed.path_segments()?;
-    let owner = segments.next()?;
-    let repo = segments.next()?;
-    let releases = segments.next()?;
+    let atualizacao = segments.next()?;
     let download = segments.next()?;
     let tag = segments.next()?;
     let filename = segments.next()?;
 
-    if owner != "rustdesk"
-        || repo != "rustdesk"
-        || releases != "releases"
+    if atualizacao != "atualizacao"
         || download != "download"
         || tag.is_empty()
         || segments.next().is_some()
@@ -660,31 +662,33 @@ mod tests {
     use super::get_download_file_from_url;
 
     #[test]
-    fn update_download_file_accepts_expected_github_asset_urls() {
+    fn update_download_file_accepts_expected_aurum_asset_urls() {
         let file = get_download_file_from_url(
-            "https://github.com/rustdesk/rustdesk/releases/download/1.4.0/rustdesk-1.4.0-x86_64.dmg",
+            "https://aurum.fagundesadv.com.br/atualizacao/download/1.4.9-8/AurumNexus-1.4.9-8-x86_64.exe",
         )
-        .expect("valid GitHub release asset URL");
+        .expect("valid Aurum update asset URL");
 
         assert_eq!(
             file.file_name().and_then(|name| name.to_str()),
-            Some("rustdesk-1.4.0-x86_64.dmg")
+            Some("AurumNexus-1.4.9-8-x86_64.exe")
         );
     }
 
     #[test]
     fn update_download_file_rejects_untrusted_or_malformed_urls() {
         for url in [
-            "http://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
-            "https://example.com/rustdesk.exe",
-            "https://github.com/other/project/releases/download/1/rustdesk.exe",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/nested/rustdesk.exe",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/C:rustdesk.exe",
-            "https://user@github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
-            "https://github.com:443/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe?download=1",
-            "https://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe#download",
+            "http://aurum.fagundesadv.com.br/atualizacao/download/1/AurumNexus.exe",
+            "https://example.com/AurumNexus.exe",
+            "https://github.com/rustdesk/rustdesk/releases/download/1/rustdesk.exe",
+            "https://aurum.fagundesadv.com.br.example.com/atualizacao/download/1/AurumNexus.exe",
+            "https://aurum.fagundesadv.com.br/outra/download/1/AurumNexus.exe",
+            "https://aurum.fagundesadv.com.br/atualizacao/download/1/",
+            "https://aurum.fagundesadv.com.br/atualizacao/download/1/nested/AurumNexus.exe",
+            "https://aurum.fagundesadv.com.br/atualizacao/download/1/C:AurumNexus.exe",
+            "https://user@aurum.fagundesadv.com.br/atualizacao/download/1/AurumNexus.exe",
+            "https://aurum.fagundesadv.com.br:443/atualizacao/download/1/AurumNexus.exe",
+            "https://aurum.fagundesadv.com.br/atualizacao/download/1/AurumNexus.exe?download=1",
+            "https://aurum.fagundesadv.com.br/atualizacao/download/1/AurumNexus.exe#download",
             "not a url",
         ] {
             assert!(get_download_file_from_url(url).is_none(), "{url}");

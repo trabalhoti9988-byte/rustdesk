@@ -972,13 +972,18 @@ pub fn check_software_update() {
 // entao a pessoa ve o cartao "nova versao" e decide quando clicar em Atualizar.
 const AURUM_VERSAO_URL: &str = "https://aurum.fagundesadv.com.br/api/versao";
 
+/// URL de versao em uso. Para testar o cartao sem mexer no servidor: opcao local
+/// `aurum-versao-url` (ex. http://127.0.0.1:8099/api/versao). Vazia = servidor do
+/// escritorio. O download so e aceito da MESMA origem (updater::get_update_download_file_from_url).
+pub fn aurum_versao_url() -> String {
+    Some(LocalConfig::get_option("aurum-versao-url"))
+        .filter(|u| !u.is_empty())
+        .unwrap_or(AURUM_VERSAO_URL.to_owned())
+}
+
 #[tokio::main(flavor = "current_thread")]
 pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
-    // Para testar o cartao sem mexer no servidor: opcao local `aurum-versao-url`
-    // (ex. http://127.0.0.1:8099/api/versao). Vazia = servidor do escritorio.
-    let url = Some(LocalConfig::get_option("aurum-versao-url"))
-        .filter(|u| !u.is_empty())
-        .unwrap_or(AURUM_VERSAO_URL.to_owned());
+    let url = aurum_versao_url();
     let proxy_conf = Config::get_socks();
     let tls_url = get_url_for_tls(&url, &proxy_conf);
     let tls_type = get_cached_tls_type(tls_url);
